@@ -6,7 +6,7 @@ all: tessfont
 tessfont: tessfont.o
 	g++ $(CXXFLAGS) -o tessfont tessfont.o `freetype-config --libs` -lz
 
-tessfont.o: tessfont.c
+tessfont.o: tessfont.cpp
 	g++ $(CXXFLAGS) -c -o $@ $< `freetype-config --cflags`
 
 clean:
