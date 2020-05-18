@@ -66,7 +66,10 @@ void writepngchunk(FILE *f, const char *type, uchar *data, uint len)
     fwrite(data, 1, len, f);
     crc = crc32(0, Z_NULL, 0);
     crc = crc32(crc, (const Bytef *)type, 4);
-    if(data) crc = crc32(crc, data, len);
+    if(data)
+    {
+        crc = crc32(crc, data, len);
+    }
     writebig(f, crc);
 }
 
@@ -293,7 +296,11 @@ const char *encodeutf8(int uni)
 {
     static char buf[7];
     char *dst = buf;
-    if(uni <= 0x7F) { *dst++ = uni; goto uni1; }
+    if(uni <= 0x7F)
+    {
+        *dst++ = uni;
+        goto uni1;
+    }
     else if(uni <= 0x7FF)
     {
         *dst++ = 0xC0 | (uni>>6);
@@ -398,11 +405,13 @@ static inline int search1(int x, int y, int w, int radius, int cy, uchar *src)
             else
             {
                 for(; cx >= bx; cx--, bits >>= 1)
-                if(!(bits&1))
                 {
-                    sx1 = cx+1;
-                    searchdist(x, y, cx, cy);
-                    goto foundbelow1;
+                    if(!(bits&1))
+                    {
+                        sx1 = cx+1;
+                        searchdist(x, y, cx, cy);
+                        goto foundbelow1;
+                    }
                 }
             }
         }
@@ -483,7 +492,10 @@ foundbelow1:
         while(cx < ex1)
         {
             bits = *++bsrc;
-            if(bits==0xFF) cx += 8;
+            if(bits==0xFF)
+            {
+                cx += 8;
+            }
             else if((bx = cx + 8) >= ex1)
             {
                 for(; cx < ex1; cx++, bits <<= 1)
@@ -524,6 +536,7 @@ foundabove1:
 }
 
 static int sx0, ex0;
+
 static inline int search0(int x, int y, int w, int radius, int cy, uchar *src)
 {
     int cx = imin(ex0, x)-1;
@@ -531,7 +544,10 @@ static inline int search0(int x, int y, int w, int radius, int cy, uchar *src)
     {
         uchar *bsrc = &src[cx>>3];
         int bx = cx&~7, bits = *bsrc;
-        if(!bits) cx = bx-1;
+        if(!bits)
+        {
+            cx = bx-1;
+        }
         else
         {
             bits >>= 7-(cx&7);
@@ -702,7 +718,12 @@ void gensdf(struct fontchar *c)
             {
                 for(x = dx*supersample - radius; x < (dx+1)*supersample - radius; x++)
                 {
-                    int sx = imax(x - radius, 0), sy = imax(y - radius, 0), ex = imin(x + radius, w), ey = imin(y + radius, h), cy, val = 0;
+                    int sx = imax(x - radius, 0),
+                        sy = imax(y - radius, 0),
+                        ex = imin(x + radius, w),
+                        ey = imin(y + radius, h),
+                        cy,
+                        val = 0;
                     if(y >= 0 && y < h && x >= 0 && x < w)
                     {
                         uchar *center = (uchar *)c->glyph->bitmap.buffer + y*c->glyph->bitmap.pitch;
@@ -757,7 +778,7 @@ void gensdf(struct fontchar *c)
                     }
                 }
             }
-            *dst = (uchar)iclamp((int)round(127.5 + (127.5/(supersample*supersample))*total/radius), 0, 255);
+            *dst = static_cast<uchar>(iclamp(static_cast<int>(round(127.5 + (127.5/(supersample*supersample))*total/radius)), 0, 255));
             if(*dst)
             {
                 x1 = imin(x1, dx);
@@ -1055,11 +1076,11 @@ int main(int argc, char **argv)
             dst->tex = -1;
             dst->x = INT_MIN;
             dst->y = INT_MIN;
-            dst->w = b->bitmap.width/(float)supersample;
-            dst->h = b->bitmap.rows/(float)supersample;
-            dst->left = b->left/(float)supersample;
-            dst->top = b->top/(float)supersample;
-            dst->advance = offsetx + p->advance.x/(float)(supersample<<16) + advance;
+            dst->w = b->bitmap.width/static_cast<float>(supersample);
+            dst->h = b->bitmap.rows/static_cast<float>(supersample);
+            dst->left = b->left/static_cast<float>(supersample);
+            dst->top = b->top/static_cast<float>(supersample);
+            dst->advance = offsetx + p->advance.x/static_cast<float>(supersample<<16) + advance;
             dst->glyph = b;
             dst->sdfradius = radius;
             dst->sdf = NULL;
@@ -1213,7 +1234,10 @@ int main(int argc, char **argv)
             x2 = fmax(x2, dst->left + dst->w);
             w2 = fmax(w2, dst->w);
             h2 = fmax(h2, dst->h);
-            if(dst != order[i]) --i;
+            if(dst != order[i])
+            {
+                --i;
+            }
         }
     }
     if(rh > 0)
@@ -1222,7 +1246,7 @@ int main(int argc, char **argv)
     }
     if(sh <= 0)
     {
-        sh = (int)ceil(y2 - y1);
+        sh = static_cast<int>(ceil(y2 - y1));
     }
     if(sw <= 0)
     {
@@ -1241,6 +1265,6 @@ int main(int argc, char **argv)
         }
     }
     FT_Done_FreeType(l);
-    printf("tessfont: (%g, %g) .. (%g, %g) = (%g, %g) / (%g, %g), %d texs, %d secs\n", x1, y1, x2, y2, x2 - x1, y2 - y1, w2, h2, numtex, (int)(endtime - starttime));
+    printf("tessfont: (%g, %g) .. (%g, %g) = (%g, %g) / (%g, %g), %d texs, %d secs\n", x1, y1, x2, y2, x2 - x1, y2 - y1, w2, h2, numtex, static_cast<int>(endtime - starttime));
     return EXIT_SUCCESS;
 }
