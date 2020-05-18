@@ -79,6 +79,7 @@ struct pngihdr
     uchar bitdepth, colortype, compress, filter, interlace;
 };
 
+// writes a png with the specified name, dimensions, and bit depth
 void savepng(const char *filename, uchar *data, int w, int h, int bpp, int flip)
 {
     const uchar signature[] = { 137, 80, 78, 71, 13, 10, 26, 10 };
@@ -154,7 +155,11 @@ void savepng(const char *filename, uchar *data, int w, int h, int bpp, int flip)
             z.avail_in = j ? w*bpp : 1;
             while(z.avail_in > 0)
             {
-                if(deflate(&z, Z_NO_FLUSH) != Z_OK) goto cleanuperror;
+                if(deflate(&z, Z_NO_FLUSH) != Z_OK)
+                {
+                    goto cleanuperror;
+                }
+//======================================================================= FLUSHZ
                 #define FLUSHZ do { \
                     int flush = sizeof(buf) - z.avail_out; \
                     crc = crc32(crc, buf, flush); \
@@ -175,6 +180,8 @@ void savepng(const char *filename, uchar *data, int w, int h, int bpp, int flip)
             goto cleanuperror;
         }
         FLUSHZ;
+        #undef FLUSHZ
+//==============================================================================
         if(err == Z_STREAM_END)
         {
             break;
@@ -208,6 +215,17 @@ enum
     CT_UNICODE = 1<<6
 };
 
+/* matrix to fill 256 entry matrix with flags:
+ * s: space
+ * p: print
+ * d: digits
+ * a: alphabet, lowercase
+ * A: alphabet, uppercase
+ * u: unicode, lowercase
+ * U: unicode, uppercase
+ */
+
+//==================================================================== CUBECTYPE
 #define CUBECTYPE(s, p, d, a, A, u, U) \
     0, U, U, U, U, U, U, U, U, s, s, s, s, s, U, U, \
     U, U, U, U, U, U, U, U, U, U, U, U, U, U, U, U, \
@@ -236,6 +254,8 @@ const uchar cubectype[256] =
               CT_PRINT|CT_UNICODE|CT_ALPHA|CT_LOWER,
               CT_PRINT|CT_UNICODE|CT_ALPHA|CT_UPPER)
 };
+#undef CUBECTYPE
+//==============================================================================
 
 int iscubeprint(uchar c)
 {
@@ -685,9 +705,13 @@ foundabove0:
     return sx0 < ex0;
 }
 
-#define SUPERSAMPLE_MIN 1
-#define SUPERSAMPLE_MAX 32
-static int supersample = SUPERSAMPLE_MIN;
+enum
+{
+    Supersample_Min = 1,
+    Supersample_Max = 32
+};
+
+static int supersample = Supersample_Min;
 
 void gensdf(struct fontchar *c)
 {
@@ -1019,7 +1043,7 @@ int main(int argc, char **argv)
     {
         fatal("Usage: tessfont infile outfile supersample border[:border2[:outline:outline2]] radius pad offsetx[:offsety] advance charwidth charheight texwidth texheight [spacewidth spaceheight scale texdir]");
     }
-    supersample = iclamp(atoi(argv[3]), SUPERSAMPLE_MIN, SUPERSAMPLE_MAX);
+    supersample = iclamp(atoi(argv[3]), Supersample_Min, Supersample_Max);
     sscanf(argv[4], "%f:%f:%f:%f", &border, &border2, &outline, &outline2);
     radius = atoi(argv[5]);
     pad = atoi(argv[6]);
